@@ -64,8 +64,8 @@ The default three-agent workflow is:
 1. Create a `swarmforge/` directory in the target working directory.
 2. Put `swarmforge.conf`, `constitution.prompt`, and one `<role>.prompt` file per configured role inside it. If needed, add subordinate files under `swarmforge/constitution/`.
 3. In `swarmforge/swarmforge.conf`, define each window as `window <role> <agent> <worktree>`.
-4. Add `swarmforge.sh` to your shell `PATH` before startup.
-5. Run `swarmforge.sh <working-directory>` or run it from inside that directory.
+4. Add the `swarm` launcher to your shell `PATH` before startup.
+5. Run `swarm <working-directory>` or run `./swarm` from inside a checked-out SwarmForge tool directory.
 6. If the working directory is not already a git repo, startup runs `git init`, renames the initial branch to `master`, writes `.gitignore` entries for `.swarmforge/`, `.worktrees/`, `swarmtools/`, `logs/`, and `agent_context/`, and makes the first commit from the current project state.
 7. Startup creates a git worktree for each window under `.worktrees/<worktree>`, unless the worktree field is `none` or `master`.
 8. Startup creates `swarmtools/notify-agent.sh` for that project.
@@ -124,6 +124,7 @@ SWARMFORGE_TERMINAL=none ./swarm
 Use `ghostty` when you want SwarmForge to open Ghostty tabs instead of the default Terminal.app windows.
 Use `windows-terminal` when you want SwarmForge to open Windows Terminal windows from WSL.
 Use `none` when you want SwarmForge to skip terminal automation and attach the cleanup tmux session in the current shell.
+Use `SWARMFORGE_NO_TERMINAL=1` or pass `--no-terminal` when you want SwarmForge to start tmux sessions without opening or attaching any terminal surface.
 
 ### Adding A Terminal Backend
 

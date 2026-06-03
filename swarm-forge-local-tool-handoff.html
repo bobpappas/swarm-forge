@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SwarmForge Local Tool Handoff</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      max-width: 920px;
+      margin: 40px auto;
+      padding: 0 24px 64px;
+      color: #202124;
+      background: #fff;
+    }
+    h1, h2, h3 { line-height: 1.2; }
+    h1 { margin-bottom: 0.25rem; }
+    .meta { color: #5f6368; margin-top: 0; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.95em;
+    }
+    pre {
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+    }
+    li { margin: 0.25rem 0; }
+    .callout {
+      border-left: 4px solid #2563eb;
+      background: #eff6ff;
+      padding: 12px 16px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .warn {
+      border-left-color: #b45309;
+      background: #fffbeb;
+    }
+  </style>
+</head>
+<body>
+  <h1>SwarmForge Local Tool Handoff</h1>
+  <p class="meta">
+    Summary for moving a locally enhanced SwarmForge setup out of a project copy and into a reusable local tool repo.
+  </p>
+
+  <h2>Goal</h2>
+  <p>
+    The user wants to use the same enhanced SwarmForge implementation across multiple local repos on this Mac:
+    <code>textbee-ops</code>, the TextBee fork repo, and any future projects. The current enhanced copy appears to
+    live inside or near the Bounceoids repo, and was originally installed with a curl-based upstream copy.
+  </p>
+
+  <h2>Known Current Situation</h2>
+  <ul>
+    <li>Current working repo for this handoff: <code>/Users/bpappas/Code/GitHub/textbee-ops</code>.</li>
+    <li>Existing modified SwarmForge copy: <code>/Users/bpappas/Code/GitHub/Bounceoids</code>.</li>
+    <li>The Bounceoids copy was installed with curl from <code>unclebob/swarm-forge</code>.</li>
+    <li>Another Codex context has already added feature enhancements to that local copy.</li>
+    <li>That work also pulled newer changes from <code>unclebob/swarm-forge</code>.</li>
+    <li>The user wants those machine-local feature updates available in <code>textbee-ops</code> and the local TextBee fork repo.</li>
+  </ul>
+
+  <h2>Recommended Design</h2>
+  <p>
+    Treat SwarmForge as a separate reusable local tool, not as vendored source inside each project repo.
+    Each project should commit only its own project-specific SwarmForge configuration and prompts.
+  </p>
+  <pre><code>/Users/bpappas/Code/GitHub/swarm-forge
+  Reusable local clone/fork of SwarmForge itself.
+  Holds user feature enhancements and upstream merges.
+
+/Users/bpappas/Code/GitHub/textbee-ops
+  Project repo. Holds TextBee ops/devops docs, compose files, runbooks, and project-specific swarmforge config.
+
+/Users/bpappas/Code/GitHub/textbee
+  TextBee app fork repo. Holds app code and its own project-specific swarmforge config.</code></pre>
+
+  <div class="callout">
+    <strong>Best approach:</strong> extract the enhanced SwarmForge work from the Bounceoids-installed copy into
+    a dedicated <code>swarm-forge</code> repo, then run that one local tool from all project repos.
+  </div>
+
+  <h2>Why Not Vendor It Into Every Repo?</h2>
+  <ul>
+    <li>Vendoring creates duplicated tool copies that drift apart.</li>
+    <li>Feature enhancements would need to be copied repeatedly.</li>
+    <li>Upstream pulls from <code>unclebob/swarm-forge</code> become harder to manage.</li>
+    <li>Project repos should remain focused on their own prompts, roles, docs, and source code.</li>
+  </ul>
+
+  <h2>Recommended Linkage</h2>
+  <p>
+    Prefer one user-level launcher on <code>PATH</code>, such as a symlink in <code>~/bin</code>, instead of committing
+    absolute symlinks inside project repos.
+  </p>
+  <pre><code>~/bin/swarm
+  -> /Users/bpappas/Code/GitHub/swarm-forge/swarm</code></pre>
+  <p>Then each project can run the same local SwarmForge implementation:</p>
+  <pre><code>cd /Users/bpappas/Code/GitHub/textbee-ops
+swarm
+
+cd /Users/bpappas/Code/GitHub/textbee
+swarm</code></pre>
+
+  <h2>Project-Local Files To Commit</h2>
+  <p>
+    Each project should commit its own SwarmForge topology and prompt constitution. For <code>textbee-ops</code>,
+    the intended structure is likely:
+  </p>
+  <pre><code>swarmforge/
+  swarmforge.conf
+  constitution.prompt
+  constitution/
+    project.prompt
+    engineering.prompt
+    workflow.prompt
+  architect.prompt
+  coder.prompt
+  reviewer.prompt
+  devops.prompt</code></pre>
+  <p>
+    The TextBee app fork can have a similar structure, but its <code>project.prompt</code> and role prompts should
+    focus on app-code work rather than deployment/devops work.
+  </p>
+
+  <h2>Runtime Paths To Ignore</h2>
+  <p>
+    SwarmForge generates local state, worktrees, logs, and notification helpers. These should not usually be committed:
+  </p>
+  <pre><code>.swarmforge/
+.worktrees/
+swarmtools/
+logs/
+agent_context/</code></pre>
+
+  <h2>Suggested Work Plan For Next Codex Context</h2>
+  <ol>
+    <li>Inspect the modified Bounceoids SwarmForge copy and identify the exact SwarmForge files present there.</li>
+    <li>Clone or create the user's fork of <code>unclebob/swarm-forge</code> at <code>/Users/bpappas/Code/GitHub/swarm-forge</code>.</li>
+    <li>Diff the Bounceoids-installed copy against the clean fork/upstream state.</li>
+    <li>Port the user's local feature enhancements into the dedicated <code>swarm-forge</code> repo.</li>
+    <li>Commit those enhancements in the dedicated tool repo.</li>
+    <li>Create a user-level launcher symlink or shell alias so <code>swarm</code> resolves to the dedicated tool repo.</li>
+    <li>Add project-specific <code>swarmforge/</code> config to <code>textbee-ops</code>.</li>
+    <li>Add a separate project-specific <code>swarmforge/</code> config to the local TextBee app fork.</li>
+    <li>Verify both repos launch using the same dedicated SwarmForge tool.</li>
+  </ol>
+
+  <h2>Safety Notes</h2>
+  <ul>
+    <li>Do not overwrite the Bounceoids copy until its local enhancements are identified and preserved.</li>
+    <li>Do not commit absolute symlinks from project repos to the local SwarmForge tool.</li>
+    <li>Do not commit generated SwarmForge runtime directories.</li>
+    <li>Do not commit secrets from TextBee deployment work.</li>
+    <li>Before first launch in an existing repo, inspect SwarmForge startup behavior for any cleanup intended only for fresh curl-installed directories.</li>
+  </ul>
+
+  <h2>TextBee Context</h2>
+  <p>
+    The <code>textbee-ops</code> repo is intended to be the DevOps/control repo for both local macOS development
+    and TrueNAS production deployment. The TextBee fork repo is expected to hold actual app-code changes.
+    SwarmForge project prompts should preserve that split:
+  </p>
+  <pre><code>textbee-ops
+  Compose files, Caddy/Cloudflare config, scripts, deployment docs, runbooks, local dev/prod ops workflows.
+
+textbee
+  TextBee application source code changes, especially auth changes and frontend/backend app behavior.</code></pre>
+
+  <h2>Open Questions</h2>
+  <ul>
+    <li>What exact feature enhancements were added to the Bounceoids SwarmForge copy?</li>
+    <li>Does the user already have a GitHub fork of <code>unclebob/swarm-forge</code>, or should one be created?</li>
+    <li>Where is the local TextBee app fork on this machine?</li>
+    <li>Should the shared launcher be a symlink in <code>~/bin</code>, a shell alias, or another PATH-managed location?</li>
+  </ul>
+</body>
+</html>

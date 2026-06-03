@@ -10,6 +10,12 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
+NO_TERMINAL="${SWARMFORGE_NO_TERMINAL:-0}"
+if [[ "${1:-}" == "--no-terminal" ]]; then
+  NO_TERMINAL=1
+  shift
+fi
+
 WORKING_DIR="${1:-$PWD}"
 WORKING_DIR="$(cd "$WORKING_DIR" && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -605,7 +611,10 @@ echo -e "${GREEN}Tip: Use $WORKING_DIR/swarmtools/notify-agent.sh <role-or-index
 echo -e "${GREEN}Tip: Reattach manually with 'tmux -S $TMUX_SOCKET attach-session -t <session-name>' if needed.${RESET}"
 echo ""
 
-if terminal_backend_can_open_sessions; then
+if [[ "$NO_TERMINAL" == "1" ]]; then
+  echo -e "${YELLOW}No-terminal mode; tmux sessions started without opening terminal windows.${RESET}"
+  echo -e "${GREEN}Attach manually with 'tmux -S $TMUX_SOCKET attach-session -t <session-name>'.${RESET}"
+elif terminal_backend_can_open_sessions; then
   echo -e "Opening separate $(terminal_backend_label) surfaces for each session..."
   if terminal_backend_tracks_windows; then
     : > "$WINDOW_IDS_FILE"
