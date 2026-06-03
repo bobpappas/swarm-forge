@@ -10,14 +10,73 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
+print_usage() {
+  cat <<'EOF'
+Usage: swarm [--no-terminal] [working-directory]
+
+Options:
+  --no-terminal    Start tmux sessions without opening or attaching terminals.
+  -h, --help       Show this help.
+
+Environment:
+  SWARMFORGE_NO_TERMINAL=1    Same as --no-terminal.
+  SWARMFORGE_TERMINAL=<name>  Select terminal backend: terminal-app, ghostty,
+                              windows-terminal, or none.
+EOF
+}
+
 NO_TERMINAL="${SWARMFORGE_NO_TERMINAL:-0}"
-if [[ "${1:-}" == "--no-terminal" ]]; then
-  NO_TERMINAL=1
-  shift
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --no-terminal)
+      NO_TERMINAL=1
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo -e "${RED}Error:${RESET} Unknown option '$1'" >&2
+      print_usage >&2
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ $# -gt 1 ]]; then
+  echo -e "${RED}Error:${RESET} Expected at most one working directory argument." >&2
+  print_usage >&2
+  exit 1
 fi
 
-WORKING_DIR="${1:-$PWD}"
-WORKING_DIR="$(cd "$WORKING_DIR" && pwd)"
+find_working_dir() {
+  local candidate
+  candidate="$(cd "${1:-$PWD}" && pwd)"
+
+  while [[ "$candidate" != "/" ]]; do
+    if [[ -f "$candidate/swarmforge/swarmforge.conf" ]]; then
+      echo "$candidate"
+      return 0
+    fi
+    candidate="${candidate:h}"
+  done
+
+  cd "${1:-$PWD}" && pwd
+}
+
+if [[ $# -eq 0 ]]; then
+  WORKING_DIR="$(find_working_dir "$PWD")"
+else
+  WORKING_DIR="$(cd "$1" && pwd)"
+fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SWARM_FORGE_DIR="$WORKING_DIR/swarmforge"
 SWARM_TOOLS_DIR="$WORKING_DIR/swarmtools"
